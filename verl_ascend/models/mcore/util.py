@@ -85,7 +85,7 @@ def preprocess_packed_seqs(input_ids: torch.Tensor, attention_mask: torch.Tensor
 
 
 def patch_mcore_util():
-    import verl
+    from verl.models.mcore import util
     
     from verl_ascend.patch_utils import apply_patches
 
@@ -93,4 +93,4 @@ def patch_mcore_util():
         ("preprocess_packed_seqs", preprocess_packed_seqs),
     ]
 
-    apply_patches(patch_list, verl.models.mcore.util)
+    apply_patches(patch_list, util)
