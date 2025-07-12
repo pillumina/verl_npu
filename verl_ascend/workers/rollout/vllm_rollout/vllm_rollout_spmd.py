@@ -85,7 +85,7 @@ def __init__(self, model_path: str, config: DictConfig, tokenizer, model_hf_conf
         # disable_mm_preprocessor_cache=False,
         skip_tokenizer_init=False,
         max_model_len=max_model_len,
-        load_format='safetensors',
+        load_format=load_format,
         disable_log_stats=config.disable_log_stats,
         max_num_batched_tokens=max_num_batched_tokens,
         enable_chunked_prefill=config.enable_chunked_prefill,
