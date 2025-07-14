@@ -7,3 +7,6 @@ def adpat_verl_to_ascend():
 
     patch_mcore_registry()
     patch_vllm_rollout_spmd()
+
+
+adpat_verl_to_ascend()
