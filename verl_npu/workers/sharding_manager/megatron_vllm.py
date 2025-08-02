@@ -94,12 +94,12 @@ class MegatronVLLMSshardingManagerPatch(NPUPatchHelper[MegatronVLLMShardingManag
 
     @GPUMemoryLogger(role="megatron vllm sharding_manager", logger=logger)
     def __exit__(self, exc_type, exc_value, traceback):
-        # if self.rollout_config.free_cache_engine:
+        if self.rollout_config.free_cache_engine:
         #     self.inference_engine.sleep(level=1)
-        self.rollout.free_cache_engine()
-        log_gpu_memory_usage("After free vllm cache", logger=logger)
-        self.rollout.offload_model_weights()
-        log_gpu_memory_usage("After offload vllm model", logger=logger)
+            self.rollout.free_cache_engine()
+            log_gpu_memory_usage("After free vllm cache", logger=logger)
+            self.rollout.offload_model_weights()
+            log_gpu_memory_usage("After offload vllm model", logger=logger)
         for model in self.actor_module:
             model.train()
 
