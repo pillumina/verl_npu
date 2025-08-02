@@ -23,6 +23,7 @@ class MegatronVLLMSshardingManagerPatch(NPUPatchHelper[MegatronVLLMShardingManag
     def __init__(
         self,
         actor_module: nn.ModuleList,
+        rollout,
         inference_engine: LLM,
         model_config: DictConfig,
         transformer_config,
@@ -31,7 +32,6 @@ class MegatronVLLMSshardingManagerPatch(NPUPatchHelper[MegatronVLLMShardingManag
         weight_converter: McoreToHFWeightConverterBase,
         device_mesh,
         offload_param: bool = True,
-        rollout=None,
         bridge=None,
     ):
         self._orig_init_(
