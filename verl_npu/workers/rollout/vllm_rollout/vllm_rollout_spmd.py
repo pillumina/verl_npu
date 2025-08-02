@@ -64,7 +64,7 @@ class vLLMRolloutPatch(NPUPatchHelper[vLLMRollout]):
         if os.environ["VLLM_USE_V1"] == "1":
             ctx = self.worker.model_runner.vllm_config.compilation_config.static_forward_context
         else:
-            ctx = self.inferece_engine.llm_engine.model_executor.driver_worker.worker.compilation_config.static_forward_context
+            ctx = self.inference_engine.llm_engine.model_executor.driver_worker.worker.compilation_config.static_forward_context
         from vllm.attention import AttentionType
 
         layer_need_kv_cache = []
