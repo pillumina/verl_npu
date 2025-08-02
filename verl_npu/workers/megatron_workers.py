@@ -8,9 +8,7 @@ from verl.utils.profiler import (
     DistProfiler,
     GPUMemoryLogger,
     log_gpu_memory_usage,
-    simple_timer,
 )
-from verl.utils.profiler.performance import reduce_timing
 from verl.utils.megatron_utils import (
     load_megatron_model_to_gpu,
     load_megatron_optimizer,
