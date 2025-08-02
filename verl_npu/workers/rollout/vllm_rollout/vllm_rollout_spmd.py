@@ -61,7 +61,10 @@ class vLLMRolloutPatch(NPUPatchHelper[vLLMRollout]):
                 self.inference_engine.llm_engine.model_executor.driver_worker.worker._init_cache_engine()
 
     def free_cache_engine(self):
-        ctx = self.worker.model_runner.vllm_config.compilation_config.static_forward_context
+        if os.environ["VLLM_USE_V1"] == "1":
+            ctx = self.worker.model_runner.vllm_config.compilation_config.static_forward_context
+        else:
+            ctx = self.inferece_engine.llm_engine.model_executor.driver_worker.worker.compilation_config.static_forward_context
         from vllm.attention import AttentionType
 
         layer_need_kv_cache = []
@@ -75,10 +78,11 @@ class vLLMRolloutPatch(NPUPatchHelper[vLLMRollout]):
             for _ in range(pipeline_parallel_size):
                 kv_cache.append(torch.tensor([]))
             ctx[layer_name].kv_cache = kv_cache
-
-        # clear kv caches
-        self.worker.model_runner.kv_caches = []
-
+        if os.environ["VLLM_USE_V1"] == "1":
+            self.worker.model_runner.kv_caches = []
+        else:
+            self.inference_engine.llm_engine.model_executor.driver_worker.worker.cache_engine = None
+            self.inference_engine.llm_engine.model_executor.driver_worker.worker.gpu_cache = None
         if hasattr(self.model, 'model') and hasattr(self.model.model.layers[0].self_attn, "attn"):
             for i in range(self.model.model.start_layer, self.model.model.end_layer):
                 attn_impl = self.model.model.layers[i].self_attn.attn.impl
