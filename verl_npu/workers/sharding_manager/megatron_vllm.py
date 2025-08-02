@@ -10,7 +10,7 @@ from verl.utils.megatron_utils import (
     offload_megatron_model_to_cpu,
     per_tensor_generator,
 )
-from verl.utils.vllm_utils import patch_vllm_moe_model_weight_loader
+from verl.utils.vllm.patch import patch_vllm_moe_model_weight_loader
 from verl.workers.sharding_manager.megatron_vllm import MegatronVLLMShardingManager, logger
 
 from verl_npu.patch_util import NPUPatchHelper
