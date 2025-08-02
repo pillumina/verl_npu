@@ -1,4 +1,5 @@
 import gc
+import os
 
 import torch
 from omegaconf import DictConfig
@@ -50,10 +51,14 @@ class vLLMRolloutPatch(NPUPatchHelper[vLLMRollout]):
         get_torch_device().empty_cache()
 
     def init_cache_engine(self):
-        if not self.worker.model_runner.kv_caches:
-            self.inference_engine.llm_engine.engine_core.engine_core.model_executor.initialize_from_config(
-                self.inference_engine.llm_engine.engine_core.engine_core.kv_cache_configs)
-            self.inference_engine.llm_engine.reset_prefix_cache()
+        if os.environ["VLLM_USE_V1"] == "1":
+            if not self.worker.model_runner.kv_caches:
+                self.inference_engine.llm_engine.engine_core.engine_core.model_executor.initialize_from_config(
+                    self.inference_engine.llm_engine.engine_core.engine_core.kv_cache_configs)
+                self.inference_engine.llm_engine.reset_prefix_cache()
+        else:
+            if self.inference_engine.llm_engine.model_executor.driver_worker.worker.cache_engine is None:
+                self.inference_engine.llm_engine.model_executor.driver_worker.worker._init_cache_engine()
 
     def free_cache_engine(self):
         ctx = self.worker.model_runner.vllm_config.compilation_config.static_forward_context
