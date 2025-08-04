@@ -2,7 +2,7 @@
 
 # 使用方式
 
-## 1、安装vllm和vllm-ascned
+## 1、安装 vllm 和 vllm-ascend
 ```bash
 # vllm
 git clone -b v0.9.1 https://github.com/vllm-project/vllm.git
@@ -17,18 +17,29 @@ cd vllm-ascend
 pip install -v -e .
 ```
 
-## 2、安装verl
+## 2、安装 Megatron 和 MindSpeed
+```bash
+git clone https://github.com/NVIDIA/Megatron-LM.git
+cd Megatron-LM
+git checkout core_v0.12.1
+pip install -e .
+
+https://gitee.com/ascend/MindSpeed.git
+git checkout ab90bbce894603b502a09025bcdf306f16b7a89f
+```
+
+## 3、安装 verl
 ```bash
 git clone https://github.com/volcengine/verl.git
 cd verl
-git checkout 503ea75f533f715cf1667551bd375ec9b1e0d5fc
+git checkout 4e9d2878ee27e5ff004531b0a65503ed698c2c99
 pip install -e .
 ```
 
-## 3、安装插件
+## 4、安装插件
 ```bash
 # 请确保 vllm 已正确安装并且之后不会做覆盖
-git clone https://github.com/ji-huazhong/mindspeed-rl.git
+git clone https://github.com/ji-huazhong/mindspeed-rl.git -b verl_npu
 cd mindspeed-rl
 pip install -e .
 ```
