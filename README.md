@@ -6,13 +6,14 @@
 ```bash
 # vllm
 git clone -b v0.9.1 https://github.com/vllm-project/vllm.git
-pip install -r vllm/requirements/build.txt -i https://mirrors.aliyun.com/pypi/simple/#将里面的torch==2.7删除
+pip install -r vllm/requirements/build.txt -i https://mirrors.aliyun.com/pypi/simple/ # 将里面的torch==2.7删除
 pip install -r vllm/requirements/common.txt -i https://mirrors.aliyun.com/pypi/simple/
 cd vllm
 VLLM_TARGET_DEVICE=empty python setup.py develop
 
 # vllm-ascend
-git clone -b v0.9.1-dev https://github.com/vllm-project/vllm-ascend.git + git checkout 4014ad2a46e01c79fd8d98d6283404d0bc414dce
+git clone -b v0.9.1-dev https://github.com/vllm-project/vllm-ascend.git
+git checkout 4014ad2a46e01c79fd8d98d6283404d0bc414dce
 cd vllm-ascend
 pip install -v -e .
 ```
@@ -24,8 +25,10 @@ cd Megatron-LM
 git checkout core_v0.12.1
 pip install -e .
 
-https://gitee.com/ascend/MindSpeed.git
+git clone https://gitee.com/ascend/MindSpeed.git
 git checkout ab90bbce894603b502a09025bcdf306f16b7a89f
+cd MindSpeed
+pip install -e .
 ```
 
 ## 3、安装 verl
