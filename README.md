@@ -1,5 +1,3 @@
-- https://github.com/jiaqiw09/verl-dapo
-
 # 使用方式
 
 ## 1、安装 vllm 和 vllm-ascend
