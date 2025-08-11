@@ -11,6 +11,7 @@ from vllm.distributed import parallel_state as vllm_ps
 from verl.utils.device import get_device_name, get_torch_device
 from verl.workers.rollout.base import BaseRollout
 from verl.workers.rollout.vllm_rollout.vllm_rollout_spmd import vLLMRollout
+from verl.workers.sharding_manager.hybrid_tp_config import HybridTPConfig
 
 from verl_npu.patch_util import NPUPatchHelper
 
@@ -29,6 +30,8 @@ class vLLMRolloutPatch(NPUPatchHelper[vLLMRollout]):
         """
         super(BaseRollout, self).__init__()
         self.config = config
+        # Extract hybrid_tp_config from kwargs if provided
+        self.hybrid_tp_config = kwargs.pop("hybrid_tp_config", None)
 
         tensor_parallel_size = self.config.get("tensor_model_parallel_size", 1)
         assert tensor_parallel_size <= torch.distributed.get_world_size(), (
@@ -110,6 +113,21 @@ class vLLMRolloutPatch(NPUPatchHelper[vLLMRollout]):
             self._init_dp_env(config)
             enable_infer_ep = True
 
+        # Extract hybrid TP config for additional_config
+        additional_config = {}
+        if hasattr(self, 'hybrid_tp_config') and self.hybrid_tp_config is not None:
+            # Extract tp_size values from hybrid_tp_config
+            if self.hybrid_tp_config.o_proj_tp_size is not None:
+                additional_config["o_proj_tp_size"] = self.hybrid_tp_config.o_proj_tp_size
+            if self.hybrid_tp_config.mlp_tp_size is not None:
+                additional_config["mlp_tp_size"] = self.hybrid_tp_config.mlp_tp_size
+            if self.hybrid_tp_config.lm_head_tp_size is not None:
+                additional_config["lm_head_tp_size"] = self.hybrid_tp_config.lm_head_tp_size
+        
+        # Add additional_config to engine_kwargs if not empty
+        if additional_config:
+            engine_kwargs["additional_config"] = additional_config
+
         self.inference_engine = LLM(
             model=model_path,
             enable_sleep_mode=config.free_cache_engine,
@@ -127,7 +145,7 @@ class vLLMRolloutPatch(NPUPatchHelper[vLLMRollout]):
             enable_chunked_prefill=config.enable_chunked_prefill,
             enable_prefix_caching=True,
             trust_remote_code=trust_remote_code,
-            enable_expert_parallel=enable_infer_ep,
+            enable_expert_parallel=False, # todo: variable for moe scenario
             seed=config.get("seed", 0),
             **lora_kwargs,
             **engine_kwargs,

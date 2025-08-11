@@ -12,4 +12,4 @@ def apply_npu_plugin():
 
     vLLMRolloutPatch.apply_patch()
 
-    ActorRolloutRefWorkerPatch()
+    ActorRolloutRefWorkerPatch().apply_patch()
