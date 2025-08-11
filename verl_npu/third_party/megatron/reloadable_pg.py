@@ -131,13 +131,3 @@ class ReloadableProcessGroup:
                 ranks=reloadable_group.group_info["ranks"],
             )
             reloadable_group.group = group
-
-
-def destroy_process_group():
-    """Destroy all reloadable process groups."""
-    ReloadableProcessGroup.destroy_process_group()
-
-
-def reload_process_group():
-    """Reload all reloadable process groups."""
-    ReloadableProcessGroup.reload_process_groups
