@@ -15,12 +15,60 @@
 
 import logging
 from types import MethodType, ModuleType
-from typing import Type, Union
+from typing import Any, Dict, List, Type, Union
 
 logger = logging.getLogger(__name__)
 
 Patchable = Union[Type, ModuleType]
 
+
+# Global in-memory summary for applied patches
+_PATCH_SUMMARY: List[Dict[str, Any]] = []
+
+
+def _qualname(obj: Any) -> str:
+    """Return fully-qualified name for a class or module."""
+    module_name = getattr(obj, "__module__", None)
+    obj_name = getattr(obj, "__name__", repr(obj))
+    return f"{module_name}.{obj_name}" if module_name else obj_name
+
+
+def get_patch_summary() -> List[Dict[str, Any]]:
+    """Get a copy of the applied patch summary."""
+    return list(_PATCH_SUMMARY)
+
+
+def print_patch_summary() -> None:
+    """Print a well-formatted summary of all applied patches."""
+    if not _PATCH_SUMMARY:
+        msg = "[NPU Patch] No patches applied."
+        print(msg)
+        logger.info(msg)
+        return
+
+    lines: List[str] = []
+    lines.append("\n================ NPU Patch Summary ================")
+    for index, record in enumerate(_PATCH_SUMMARY, start=1):
+        target = record.get("target", "<unknown>")
+        patch_cls = record.get("patch_class", "<unknown>")
+        lines.append(f"{index}. Target: {target}")
+        lines.append(f"   Patch : {patch_cls}")
+        changes: List[Dict[str, str]] = record.get("changes", [])
+        if changes:
+            lines.append("   Changes:")
+            for change in changes:
+                action = change.get("action", "?")
+                kind = change.get("kind", "attr")
+                name = change.get("name", "?")
+                lines.append(f"     - {action:<8} {kind:<11} {name}")
+        else:
+            lines.append("   Changes: <none>")
+    lines.append("===================================================\n")
+
+    msg = "\n".join(lines)
+    # Print to console and log for visibility in various environments
+    print(msg)
+    logger.info(msg)
 
 # Copy from ArcticInference to allow patch existing classes or modules.
 class NPUPatchHelper:
@@ -115,6 +163,7 @@ class NPUPatchHelper:
         if "_npu_patches" not in target.__dict__:
             target._npu_patches = {}
 
+        changes: List[Dict[str, str]] = []
         for name, attr in cls.__dict__.items():
 
             # Skip special names and the '_npu_patch_target' itself
@@ -138,3 +187,20 @@ class NPUPatchHelper:
             setattr(target, name, attr)
             action = "replaced" if replace else "added"
             logger.info(f"{cls.__name__} {action} {target.__name__}.{name}")
+            # Classify the kind of change for summary
+            if isinstance(attr, classmethod):
+                kind = "classmethod"
+            elif isinstance(attr, staticmethod):
+                kind = "staticmethod"
+            elif callable(attr):
+                kind = "callable"
+            else:
+                kind = "attribute"
+            changes.append({"name": name, "action": action, "kind": kind})
+
+        # Record a summary entry for this patch class
+        _PATCH_SUMMARY.append({
+            "target": _qualname(target),
+            "patch_class": _qualname(cls),
+            "changes": changes,
+        })
