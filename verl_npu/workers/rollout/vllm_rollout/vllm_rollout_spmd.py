@@ -16,6 +16,20 @@ from verl.workers.sharding_manager.hybrid_tp_config import HybridTPConfig
 from verl_npu.patch_util import NPUPatchHelper
 
 
+def _is_primary_rank() -> bool:
+    """Return True if this process is the primary (rank 0) process."""
+    try:
+        import torch.distributed as dist
+        if dist.is_available() and dist.is_initialized():
+            return dist.get_rank() == 0
+    except Exception:
+        pass
+    try:
+        return int(os.environ.get("RANK", os.environ.get("SLURM_PROCID", 0))) == 0
+    except ValueError:
+        return True
+
+
 class vLLMRolloutPatch(NPUPatchHelper[vLLMRollout]):
 
     def __init__(self, model_path: str, config: DictConfig, tokenizer, model_hf_config, **kwargs):
@@ -115,7 +129,11 @@ class vLLMRolloutPatch(NPUPatchHelper[vLLMRollout]):
 
         # Extract hybrid TP config for additional_config
         additional_config = {}
-        if hasattr(self, 'hybrid_tp_config') and self.hybrid_tp_config is not None:
+        if (
+            hasattr(self, 'hybrid_tp_config')
+            and self.hybrid_tp_config is not None
+            and getattr(self.hybrid_tp_config, 'enabled', False)
+        ):
             # Extract tp_size values from hybrid_tp_config
             if self.hybrid_tp_config.o_proj_tp_size is not None:
                 additional_config["o_proj_tp_size"] = self.hybrid_tp_config.o_proj_tp_size
@@ -123,7 +141,11 @@ class vLLMRolloutPatch(NPUPatchHelper[vLLMRollout]):
                 additional_config["mlp_tp_size"] = self.hybrid_tp_config.mlp_tp_size
             if self.hybrid_tp_config.lm_head_tp_size is not None:
                 additional_config["lm_head_tp_size"] = self.hybrid_tp_config.lm_head_tp_size
-        
+
+        # Print additional_config before initializing LLM (rank 0 only)
+        if _is_primary_rank():
+            print(f"[NPU Patch] vLLM additional_config: {additional_config if additional_config else '{}'}")
+
         # Add additional_config to engine_kwargs if not empty
         if additional_config:
             engine_kwargs["additional_config"] = additional_config

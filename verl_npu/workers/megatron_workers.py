@@ -53,6 +53,7 @@ class ActorRolloutRefWorkerPatch(NPUPatchHelper[ActorRolloutRefWorker]):
                     model_hf_config=self.actor_model_config,
                     device_mesh=rollout_device_mesh,
                     trust_remote_code=trust_remote_code,
+                    hybrid_tp_config=hybrid_tp_config,
                 )
                 log_gpu_memory_usage("After building vllm rollout", logger=logger)
 
@@ -71,7 +72,6 @@ class ActorRolloutRefWorkerPatch(NPUPatchHelper[ActorRolloutRefWorker]):
                     device_mesh=rollout_device_mesh,
                     offload_param=self._is_offload_param,
                     bridge=self.bridge,
-                    hybrid_tp_config=hybrid_tp_config,
                 )
                 log_gpu_memory_usage("After building sharding manager", logger=logger)
 

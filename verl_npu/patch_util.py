@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import logging
+import os
 from types import MethodType, ModuleType
 from typing import Any, Dict, List, Type, Union
 
@@ -39,7 +40,9 @@ def get_patch_summary() -> List[Dict[str, Any]]:
 
 
 def print_patch_summary() -> None:
-    """Print a well-formatted summary of all applied patches."""
+    """Print a well-formatted summary of all applied patches (rank0 only)."""
+    if not _is_primary_rank():
+        return
     if not _PATCH_SUMMARY:
         msg = "[NPU Patch] No patches applied."
         print(msg)
@@ -199,7 +202,8 @@ class NPUPatchHelper:
             replace = hasattr(target, name)
             setattr(target, name, attr)
             action = "replaced" if replace else "added"
-            logger.info(f"{cls.__name__} {action} {target.__name__}.{name}")
+            if _is_primary_rank():
+                logger.info(f"{cls.__name__} {action} {target.__name__}.{name}")
             # Classify the kind of change for summary
             if isinstance(attr, classmethod):
                 kind = "classmethod"
@@ -217,3 +221,30 @@ class NPUPatchHelper:
             "patch_class": _qualname(cls),
             "changes": changes,
         })
+
+
+def _is_primary_rank() -> bool:
+    """Return True if this process is the primary (rank 0) process.
+
+    Tries torch.distributed first; falls back to environment variables commonly
+    used in distributed launchers. Defaults to True for single-process runs.
+    """
+    # Try PyTorch distributed
+    try:
+        import torch.distributed as dist
+
+        if dist.is_available() and dist.is_initialized():
+            return dist.get_rank() == 0
+    except Exception:
+        pass
+
+    # Fallback to common env vars
+    for var in ("RANK", "SLURM_PROCID", "LOCAL_RANK"):
+        if var in os.environ:
+            try:
+                return int(os.environ.get(var, "0")) == 0
+            except ValueError:
+                return True
+
+    # Single-process default
+    return True
