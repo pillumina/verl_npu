@@ -70,6 +70,19 @@ def print_patch_summary() -> None:
     print(msg)
     logger.info(msg)
 
+
+def record_patch_entry(target_obj: Any, patch_obj: Any, changes: List[Dict[str, str]]) -> None:
+    """Record a custom patch entry (for non-NPUPatchHelper operations).
+
+    This is useful when we inject modules or symbols that are not handled by
+    NPUPatchHelper.apply_patch but still want to show in the patch summary.
+    """
+    _PATCH_SUMMARY.append({
+        "target": _qualname(target_obj) if not isinstance(target_obj, str) else target_obj,
+        "patch_class": _qualname(patch_obj) if not isinstance(patch_obj, str) else patch_obj,
+        "changes": changes,
+    })
+
 # Copy from ArcticInference to allow patch existing classes or modules.
 class NPUPatchHelper:
     """
