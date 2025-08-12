@@ -44,6 +44,7 @@ class ActorRolloutRefWorkerPatch(NPUPatchHelper[ActorRolloutRefWorker]):
                     self.config.rollout.get("hybrid_tp", {}),
                     self.config.rollout.tensor_model_parallel_size
                 )
+                print(f"[NPU Patch] hybrid_tp_config is : {hybrid_tp_config if hybrid_tp_config else '{}'}")
 
                 vllm_rollout_cls = vLLMRollout if self.config.rollout.mode == "sync" else vLLMAsyncRollout
                 rollout = vllm_rollout_cls(
